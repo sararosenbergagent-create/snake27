@@ -265,10 +265,11 @@ function pause(m){
   document.getElementById("p-titre").textContent=m.titre;
   document.getElementById("p-texte").textContent=m.texte;
   document.getElementById("pause").className="vue";
+  if(estEurope(m))jouerHymne();
 }
 function reprendre(){
   if(!enPause)return;
-  enPause=false;file=[];
+  enPause=false;file=[];couperHymne();
   document.getElementById("pause").className="";
   clearInterval(timer);timer=setInterval(tour,vitesse);
 }
@@ -362,8 +363,42 @@ const SONS={
   perdu:()=>{bip(880,0.12);bip(659,0.12,0.14);bip(440,0.25,0.28);},
   depart:()=>{bip(1047,0.06);bip(1568,0.08,0.08);}
 };
+// ===== Ode a la joie (melodie de Beethoven, 1824, domaine public ; arrangement maison) =====
+const NOTE={G3:196,C4:262,D4:294,E4:330,F4:349,G4:392};
+const ODE=[ // [note, temps]
+ ["E4",1],["E4",1],["F4",1],["G4",1],["G4",1],["F4",1],["E4",1],["D4",1],
+ ["C4",1],["C4",1],["D4",1],["E4",1],["E4",1.5],["D4",.5],["D4",2],
+ ["E4",1],["E4",1],["F4",1],["G4",1],["G4",1],["F4",1],["E4",1],["D4",1],
+ ["C4",1],["C4",1],["D4",1],["E4",1],["D4",1.5],["C4",.5],["C4",2],
+ ["D4",1],["D4",1],["E4",1],["C4",1],["D4",1],["E4",.5],["F4",.5],["E4",1],["C4",1],
+ ["D4",1],["E4",.5],["F4",.5],["E4",1],["D4",1],["C4",1],["D4",1],["G3",2],
+ ["E4",1],["E4",1],["F4",1],["G4",1],["G4",1],["F4",1],["E4",1],["D4",1],
+ ["C4",1],["C4",1],["D4",1],["E4",1],["D4",1.5],["C4",.5],["C4",2]
+];
+let hymne=null;   // {osc:[...], boucle:timeout}
+function jouerHymne(){
+  couperHymne();
+  if(!son)return;const a=audio();if(!a)return;
+  const TEMPS=0.32;let t0=a.currentTime+0.05,duree=0;const osc=[];
+  ODE.forEach(([n,b])=>{
+    const o=a.createOscillator(),g=a.createGain(),len=b*TEMPS;
+    o.type="square";o.frequency.value=NOTE[n]*2;           // une octave plus haut, facon sonnerie
+    g.gain.setValueAtTime(0.05,t0+duree);g.gain.setValueAtTime(0,t0+duree+len*0.85);
+    o.connect(g);g.connect(a.destination);o.start(t0+duree);o.stop(t0+duree+len);
+    osc.push(o);duree+=len;
+  });
+  hymne={osc,boucle:setTimeout(()=>{if(hymne)jouerHymne();},(duree+0.6)*1000)};  // en boucle tant que la fiche est ouverte
+}
+function couperHymne(){
+  if(!hymne)return;
+  clearTimeout(hymne.boucle);
+  hymne.osc.forEach(o=>{try{o.stop();}catch(e){}});
+  hymne=null;
+}
+function estEurope(m){return m&&m.theme==="Europe";}
+
 function basculerSon(){
-  son=!son;localStorage.setItem("lachaine_son",son?"on":"off");majSon();
+  son=!son;if(!son)couperHymne();localStorage.setItem("lachaine_son",son?"on":"off");majSon();
   if(son){audio();bip(1760,0.05);}
 }
 function majSon(){
