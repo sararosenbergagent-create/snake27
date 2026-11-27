@@ -151,7 +151,12 @@ const SRC = p => "https://www.wikiglucksmann.fr/p.php?d=revolution-ecologique&p=
 const CAUSES = {
   queue:  {t:"Mordu !", m:"Tu t'es mordu la queue. Le repli sur soi finit toujours comme ça."},
   bord:   {t:"Dans le mur", m:"Tu as foncé dans le décor. La politique de l'autruche, version serpent."},
-  repli:  {t:"Repli national", m:"Tu as touché le mur du repli. Ta chaîne s'arrête là."},
+  repli:  [
+    {t:"Sortie de l'Europe", m:"Tu as pris la sortie. Plus de chaîne, plus d'Europe, plus de partie."},
+    {t:"Traités piétinés", m:"Tu as roulé sur les traités. L'Europe sans règles, c'est un serpent sans tête."},
+    {t:"Lâcher l'Ukraine", m:"Tu as lâché l'Ukraine. Quand on abandonne un allié, la chaîne casse."},
+    {t:"Frontières fermées aux idées", m:"Tu t'es emmuré tout seul. Bravo, tu es en sécurité, et tu as perdu."}
+  ],
   intox:  {t:"Intox", m:"Tu as avalé une fake news. Ça arrive aux meilleurs serpents."},
   fossile:{t:"Panne sèche", m:"Tu as foncé dans le fossile. Le moteur a toussé, la chaîne aussi."}
 };
@@ -408,7 +413,8 @@ function fin(cause){
   enJeu=false;clearInterval(timer);SONS.perdu();
   const nouveau=score>record();
   if(nouveau)localStorage.setItem(RECORD_KEY,score);
-  const c=CAUSES[cause];
+  let c=CAUSES[cause];
+  if(Array.isArray(c))c=c[Math.floor(Math.random()*c.length)];   // un repli tire au hasard
   document.getElementById("fin-titre").textContent=c.t;
   document.getElementById("fin-cause").textContent=c.m;
   document.getElementById("fin-score").textContent=score;
