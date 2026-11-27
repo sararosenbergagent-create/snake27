@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>La Chaîne · prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{--rose:#F90290;--bleu:#00329E;--creme:#F6F5F0;--noir:#14142B;--px:'Press Start 2P',monospace;
+        --lcd:#C5D3A0;--encre:#2C3A1E}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-variant-ligatures:none;font-feature-settings:'liga' 0,'clig' 0}
+  html,body{margin:0;background:var(--creme);color:var(--noir);font-family:Arial,Helvetica,sans-serif;font-variant-ligatures:none}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+       background-image:radial-gradient(rgba(0,50,158,.08) 1px,transparent 1px);background-size:8px 8px}
+  header{width:100%;background:var(--rose);border-bottom:6px solid var(--bleu);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  header h1{font-family:var(--px);font-weight:400;color:#fff;margin:0;font-size:18px;text-shadow:3px 3px 0 var(--bleu)}
+  header .droite{display:flex;align-items:center;gap:10px}
+  header .sc{font-family:var(--px);color:#fff;font-size:10px;text-align:right;line-height:1.7}
+  #son{font-family:var(--px);font-size:10px;background:#fff;color:var(--bleu);border:0;padding:8px 6px;cursor:pointer;
+       box-shadow:0 3px 0 var(--bleu)}
+  main{width:100%;max-width:480px;padding:12px;flex:1}
+  .ecran{display:none}.ecran.actif{display:block}
+  /* cadre pixel : bordure en escalier, pas d'arrondi */
+  .carte{background:#fff;padding:18px;margin:6px 6px 20px;position:relative;
+         box-shadow:0 -4px 0 0 var(--bleu),0 4px 0 0 var(--bleu),-4px 0 0 0 var(--bleu),4px 0 0 0 var(--bleu),8px 8px 0 0 var(--rose)}
+  h2{font-family:var(--px);font-weight:400;color:var(--bleu);margin:0 0 12px;font-size:15px;line-height:1.6}
+  p{line-height:1.5;margin:8px 0}
+  .btn{display:block;width:100%;border:0;padding:14px 8px;font-family:var(--px);font-size:13px;cursor:pointer;margin:14px 0;text-align:center;text-decoration:none;line-height:1.4;
+       transition:transform .05s}
+  .btn:active{transform:translate(3px,3px);box-shadow:none !important}
+  .btn.rose{background:var(--rose);color:#fff;box-shadow:4px 4px 0 var(--bleu)}
+  .btn.bleu{background:var(--bleu);color:#fff;box-shadow:4px 4px 0 var(--rose)}
+  .btn.blanc{background:#fff;color:var(--bleu);box-shadow:inset 0 0 0 3px var(--bleu),4px 4px 0 var(--bleu)}
+  .logo{display:block;width:150px;margin:6px auto 14px;transform:rotate(-4deg);background:#fff;padding:6px}
+  .citation{border-left:6px solid var(--rose);padding:6px 12px;font-style:italic;background:#FFF0F8}
+  .afaire{background:#FFF200;font-weight:bold;padding:0 4px}
+  .vitesses{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .vitesses .btn{font-size:10px;padding:12px 4px;margin:6px 0}
+  .vitesses small{display:block;font-family:Arial,sans-serif;font-size:11px;margin-top:6px;opacity:.9}
+  .etiquette{text-align:center;font-family:var(--px);font-size:10px;color:var(--bleu);margin:16px 0 4px}
+  /* telephone facon 3310 autour du plateau */
+  .tel{background:#1E2A5A;padding:14px 14px 10px;border-radius:26px 26px 18px 18px;box-shadow:6px 6px 0 var(--rose)}
+  .tel .marque{font-family:var(--px);font-size:9px;color:#C9D2F0;text-align:center;margin-bottom:8px;letter-spacing:2px}
+  #zone{position:relative;background:#0D1430;padding:6px;border-radius:8px}
+  canvas{display:block;width:100%;height:auto;image-rendering:pixelated;touch-action:none}
+  #bulle{display:none}
+  #pause{position:absolute;inset:6px;display:none;align-items:center;justify-content:center;background:rgba(13,20,48,.6);padding:12px}
+  #pause.vue{display:flex}
+  #pause .fiche{background:#fff;padding:14px;max-width:360px;
+         box-shadow:0 -4px 0 0 var(--rose),0 4px 0 0 var(--rose),-4px 0 0 0 var(--rose),4px 0 0 0 var(--rose)}
+  #pause .th{font-family:var(--px);font-size:9px;color:var(--rose);line-height:1.6}
+  #pause h3{font-family:var(--px);font-weight:400;color:var(--bleu);margin:8px 0;font-size:12px;line-height:1.6}
+  #pause p{font-size:15px;margin:6px 0 10px}
+  #pause .btn{margin:8px 0 2px;padding:12px;font-size:12px}
+  .options{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .options button{font-family:var(--px);font-size:8px;background:#C9D2F0;color:#1E2A5A;border:0;padding:7px 8px;cursor:pointer}
+  .legende{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:12px;margin:12px 0 4px}
+  .legende span{display:inline-flex;align-items:center;gap:6px}
+  .legende canvas{width:20px;height:20px}
+  .pad{display:grid;grid-template-columns:repeat(3,66px);grid-template-rows:repeat(2,58px);gap:8px;justify-content:center;margin:12px 0}
+  .pad button{border:0;background:var(--bleu);color:#fff;font-family:var(--px);font-size:16px;cursor:pointer;box-shadow:4px 4px 0 var(--rose)}
+  .pad button:active{transform:translate(3px,3px);box-shadow:none}
+  .pad .h{grid-column:2;grid-row:1}.pad .g{grid-column:1;grid-row:2}.pad .b{grid-column:2;grid-row:2}.pad .d{grid-column:3;grid-row:2}
+  .aide{text-align:center;font-size:13px;color:#555;margin:6px 0}
+  .mesure{border-top:3px dotted #D5D9EA;padding:12px 0}
+  .mesure b{color:var(--bleu)}
+  .mesure .th{font-family:var(--px);font-size:8px;color:var(--rose);margin-bottom:6px}
+  .mesure a{font-size:12px;color:#555}
+  .gros{font-family:var(--px);font-size:40px;color:var(--rose);text-align:center;line-height:1;margin:14px 0 8px;text-shadow:4px 4px 0 var(--bleu)}
+  footer{width:100%;max-width:480px;font-size:11px;color:#666;padding:10px 14px 20px;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<header><h1>La Chaîne</h1><div class="droite"><div class="sc" id="hud">Score 0<br>Record 0</div><button id="son" onclick="basculerSon()" aria-label="son">BIP ON</button></div></header>
+<main>
+
+  <!-- ACCUEIL -->
+  <section class="ecran actif" id="e-accueil">
+    <div class="carte">
+      <h2>Rassemble. Grandis. Ne te replie pas.</h2>
+      <p>Le bon vieux serpent du 3310, version présidentielle. Chaque étoile te fait grandir. Les pastilles roses sont des mesures du programme : attrape-les, le jeu se met en pause pour que tu les lises.</p>
+      <p>Les blocs noirs, c'est le repli. Tu les touches, tu perds. Tu te mords la queue, tu perds aussi.</p>
+      <p class="etiquette">Choisis ton rythme</p>
+      <div class="vitesses">
+        <button class="btn bleu" onclick="jouer('tranquille')">Tranquille<small>pour découvrir</small></button>
+        <button class="btn rose" onclick="jouer('normal')">Normal<small>le bon équilibre</small></button>
+        <button class="btn bleu" onclick="jouer('nokia')">Nokia<small>comme en 2001</small></button>
+      </div>
+      <p class="aide">Téléphone : glisse le doigt sur le plateau ou utilise les flèches. Ordinateur : flèches du clavier.</p>
+    </div>
+  </section>
+
+  <!-- JEU -->
+  <section class="ecran" id="e-jeu">
+    <div class="tel">
+    <div class="marque">CHAINE 3310</div>
+    <div id="zone">
+      <canvas id="plateau" width="400" height="400"></canvas>
+      <div id="bulle"></div>
+      <div id="pause"><div class="fiche"><div class="th" id="p-th"></div><h3 id="p-titre"></h3><p id="p-texte"></p><button class="btn rose" onclick="reprendre()">Continuer</button></div></div>
+    </div>
+    <div class="options"><button onclick="basculerTheme()" id="btn-theme">AFFICHAGE : COULEUR</button><button onclick="basculerSon()" id="btn-son2">BIP : ON</button></div>
+    </div>
+    <div class="legende">
+      <span><canvas width="20" height="20" data-sprite="etoile"></canvas>Étoile : +1</span><span><canvas width="20" height="20" data-sprite="mesure"></canvas>Mesure : +5</span><span><canvas width="20" height="20" data-sprite="repli"></canvas>Repli : perdu</span>
+    </div>
+    <div class="pad">
+      <button class="h" onclick="tourner(0,-1)" aria-label="haut">▲</button>
+      <button class="g" onclick="tourner(-1,0)" aria-label="gauche">◀</button>
+      <button class="b" onclick="tourner(0,1)" aria-label="bas">▼</button>
+      <button class="d" onclick="tourner(1,0)" aria-label="droite">▶</button>
+    </div>
+  </section>
+
+  <!-- FIN -->
+  <section class="ecran" id="e-fin">
+    <div class="carte">
+      <h2 id="fin-titre">Perdu</h2>
+      <p id="fin-cause"></p>
+      <div class="gros" id="fin-score">0</div>
+      <p style="text-align:center;margin-top:0" id="fin-detail"></p>
+      <button class="btn rose" onclick="jouer(mode)">Rejouer</button>
+      <button class="btn blanc" onclick="ecran('e-accueil')">Changer de rythme</button>
+      <button class="btn bleu" onclick="defier()">Défier un ami</button>
+      <p class="aide" id="partage-ok"></p>
+    </div>
+    <div class="carte" id="fin-mesures-bloc">
+      <h2>Ta chaîne de mesures</h2>
+      <div id="fin-mesures"></div>
+    </div>
+  </section>
+
+</main>
+<footer>
+  Mesures : programme 2027, livret « Révolution écologique », première partie (9 novembre 2026), Formulations courtes, chaque mesure renvoie à sa page d'origine.<br>
+  Prototype de test interne · Mise à jour 27/11/2026 · Projet bénévole créé par Sara Rosenberg
+</footer>
+
+<script>
+const MESURES = [{"id": 1, "theme": "Fiscalité", "titre": "Les plus riches paient pour le climat", "texte": "Une contribution exceptionnelle, une seule année, sur les plus hauts patrimoines. Elle rapporterait 50 milliards d'euros, versés à un fonds réservé à la transition climatique.", "page": 9}, {"id": 2, "theme": "Fiscalité", "titre": "L'avion et les jets privés taxés", "texte": "Dès les 100 premiers jours : fin des exonérations fiscales sur le carburant des vols intérieurs, hausse de la taxe sur les billets d'avion. Jets privés et yachts particulièrement ciblés.", "page": 9}, {"id": 3, "theme": "Épargne", "titre": "Un livret A plus grand", "texte": "Plafond du livret A doublé et fusionné avec le LDDS dans un Livret de souveraineté écologique et sociale, rémunéré à 2,5 %, pour prêter aux collectivités à taux bas.", "page": 10}, {"id": 4, "theme": "Industrie", "titre": "Des batteries made in France", "texte": "Soutien à la production nationale de batteries et plan industriel avec les constructeurs, adossé à la commande publique : pompes à chaleur, mobilité électrique, décarbonation de l'industrie.", "page": 16}, {"id": 5, "theme": "Numérique", "titre": "Data centers sous contrôle", "texte": "Installations de centres de données maîtrisées : impact environnemental, partage local de la valeur, et récupération obligatoire de la chaleur produite pour la réinjecter dans les réseaux locaux.", "page": 16}, {"id": 6, "theme": "Commerce", "titre": "Stop au dumping", "texte": "Fin du dumping social, environnemental et sanitaire : ajustement carbone aux frontières et devoir de vigilance renforcés, mesures miroirs dans les accords commerciaux, sortie des logiques de libre-échange.", "page": 16}, {"id": 7, "theme": "Climat", "titre": "200 milliards pour sortir du fossile", "texte": "200 milliards d'euros d'argent public sur le quinquennat. Objectifs : neutralité carbone en 2050 et stabilisation de la dette à l'horizon 2032.", "page": 8}, {"id": 8, "theme": "Pouvoir d'achat", "titre": "Un chèque énergie tout de suite", "texte": "Dès l'élection : 500 euros pour six millions de familles, 200 euros pour dix millions de familles des classes moyennes.", "page": 12}, {"id": 9, "theme": "Transports", "titre": "Une voiture électrique à 100 € par mois", "texte": "Leasing social : un million de voitures électriques sur 5 ans, à 100 euros par mois sans apport. Dont 100 000 tout de suite pour les auxiliaires de vie et soignants en zone rurale.", "page": 13}, {"id": 10, "theme": "Logement", "titre": "Une pompe à chaleur à 1 € par jour", "texte": "Un million de pompes à chaleur à 1 euro par jour, réversibles avec climatisation quand c'est pertinent. En priorité pour les logements chauffés au fioul ou au gaz, ou les plus exposés aux fortes chaleurs.", "page": 13}, {"id": 11, "theme": "Transports", "titre": "Pass Mobilité Jeunes à 1 € par jour", "texte": "Un Pass Mobilité Durable Jeunes à 1 euro par jour pour les moins de 25 ans. Plus 5 000 lignes de covoiturage d'ici 2035 et des incitations à prendre le train.", "page": 13}, {"id": 12, "theme": "Énergie", "titre": "Deux fois plus de renouvelables", "texte": "Au moins doubler d'ici 2035 les capacités de production d'énergie renouvelable, grâce à un contrat entre l'État et chaque région. Autoconsommation encouragée.", "page": 15}, {"id": 13, "theme": "Énergie", "titre": "Le nucléaire prolongé, sans la Russie", "texte": "Réacteurs existants prolongés et sécurisés, contrôle de la sûreté nucléaire de nouveau indépendant, et retrait d'EDF, Framatome et Orano des partenariats avec le russe Rosatom.", "page": 15}, {"id": 14, "theme": "Pouvoir d'achat", "titre": "Électricité : prix bloqué à l'inflation", "texte": "Moratoire sur les hausses de taxes sur l'électricité, prix qui n'augmente pas plus vite que l'inflation, et plus d'heures creuses en journée.", "page": 16}, {"id": 15, "theme": "Canicule", "titre": "Le droit à la fraîcheur", "texte": "Un plan national avec les collectivités : ombre en ville, refuges climatiques, toits frais, piscines gratuites et location de climatiseurs d'urgence pendant les canicules.", "page": 18}, {"id": 16, "theme": "École", "titre": "Des écoles rénovées contre la chaleur", "texte": "Objectif : rénover 4 000 écoles primaires par an, et plus de 2 800 collèges et lycées. En commençant par ceux qui ont dû fermer pendant l'été.", "page": 18}, {"id": 17, "theme": "Travail", "titre": "Travailler sous la canicule", "texte": "Ouverture de discussions avec les syndicats et le patronat pour adapter les conditions de travail aux chaleurs extrêmes.", "page": 18}, {"id": 18, "theme": "Sécurité civile", "titre": "1 milliard contre les incendies", "texte": "1 milliard d'euros d'investissement dès juin 2027 pour la sécurité civile face aux canicules et aux incendies. Et un fonds qui avance l'indemnisation des sinistrés.", "page": 18}, {"id": 19, "theme": "Institutions", "titre": "L'écologie dans la Constitution", "texte": "État d'urgence écologique déclaré. L'article 1 de la Constitution dira que la République est aussi écologique.", "page": 8}, {"id": 20, "theme": "Institutions", "titre": "Une loi qui verrouille le budget vert", "texte": "Une loi de programmation écologique, sur le modèle de la loi de programmation militaire, qui s'impose chaque année au budget.", "page": 19}, {"id": 21, "theme": "État", "titre": "Les ministres prennent le train", "texte": "Voitures de l'État passées à l'électrique, de préférence fabriquées en France ou en Europe. Les ministres privilégient le train plutôt que l'avion.", "page": 21}, {"id": 22, "theme": "Europe", "titre": "Taxer les superprofits pétroliers", "texte": "Défendre une taxe européenne sur les superprofits pétroliers et gaziers, que la France bloque aujourd'hui.", "page": 9}, {"id": 23, "theme": "Europe", "titre": "Un grand emprunt européen vert", "texte": "Lancer avec les partenaires européens un grand emprunt pour financer la transition écologique. Sans attendre, mobiliser tous les financements européens disponibles.", "page": 10}, {"id": 24, "theme": "International", "titre": "Tenir parole envers les pays du Sud", "texte": "Tenir les engagements de solidarité financière envers les pays du Sud, les plus touchés et les moins responsables du dérèglement climatique.", "page": 16}];
+const SRC = p => "https://www.wikiglucksmann.fr/p.php?d=revolution-ecologique&p=" + p;
+
+// Messages de défaite selon la cause (texte de jeu, à relire par Sara)
+const CAUSES = {
+  queue:  {t:"Mordu !", m:"Tu t'es mordu la queue. Le repli sur soi finit toujours comme ça."},
+  bord:   {t:"Dans le mur", m:"Tu as foncé dans le décor. La politique de l'autruche, version serpent."},
+  repli:  {t:"Repli national", m:"Tu as touché le mur du repli. Ta chaîne s'arrête là."},
+  intox:  {t:"Intox", m:"Tu as avalé une fake news. Ça arrive aux meilleurs serpents."},
+  fossile:{t:"Panne sèche", m:"Tu as foncé dans le fossile. Le moteur a toussé, la chaîne aussi."}
+};
+const OBST = [
+  {k:"repli", lettre:"R"}, {k:"intox", lettre:"?"}, {k:"fossile", lettre:"F"}
+];
+
+const N = 20, TAILLE = 20;                 // grille 20 x 20, cases de 20 px
+const cv = document.getElementById("plateau"), cx = cv.getContext("2d");
+let serpent, dx, dy, file, etoile, pastille, obstacles, score=0, mesuresPrises, etoilesPrises, timer, vitesse, enJeu=false, deck;
+const RECORD_KEY = "lachaine_record";
+
+function ecran(id){document.querySelectorAll(".ecran").forEach(e=>e.classList.toggle("actif",e.id===id));}
+function record(){return +(localStorage.getItem(RECORD_KEY)||0);}
+function hud(){document.getElementById("hud").innerHTML="Score "+score+"<br>Record "+record();}
+function melange(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function libre(x,y){
+  if(serpent.some(s=>s.x===x&&s.y===y))return false;
+  if(obstacles.some(o=>o.x===x&&o.y===y))return false;
+  if(etoile&&etoile.x===x&&etoile.y===y)return false;
+  if(pastille&&pastille.x===x&&pastille.y===y)return false;
+  return true;
+}
+function caseLibre(loinDeTete){
+  for(let n=0;n<500;n++){
+    const x=Math.floor(Math.random()*N),y=Math.floor(Math.random()*N);
+    if(!libre(x,y))continue;
+    if(loinDeTete){const t=serpent[0];if(Math.abs(t.x-x)+Math.abs(t.y-y)<5)continue;}
+    return {x,y};
+  }
+  return null;
+}
+
+const MODES={
+  tranquille:{depart:300,plancher:200,pente:1},
+  normal:{depart:230,plancher:140,pente:1.5},
+  nokia:{depart:150,plancher:75,pente:2}
+};
+let mode="normal",enPause=false,depuisMesure=0;
+function jouer(m){
+  mode=MODES[m]?m:mode;enPause=false;depuisMesure=0;
+  document.getElementById("pause").className="";
+  audio();SONS.depart();
+  serpent=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];
+  dx=1;dy=0;file=[];obstacles=[];etoile=null;pastille=null;
+  score=0;mesuresPrises=[];etoilesPrises=0;vitesse=MODES[mode].depart;
+  deck=melange(MESURES);
+  etoile=caseLibre(false);
+  pastille=caseLibre(true);                // une mesure dès le départ
+  document.getElementById("bulle").className="";
+  hud();ecran("e-jeu");enJeu=true;
+  clearInterval(timer);timer=setInterval(tour,vitesse);
+  dessiner();
+}
+
+function tourner(x,y){
+  if(!enJeu||enPause)return;
+  const der=file.length?file[file.length-1]:{x:dx,y:dy};
+  if(der.x===-x&&der.y===-y)return;       // pas de demi-tour
+  if(der.x===x&&der.y===y)return;
+  if(file.length<2)file.push({x,y});
+}
+
+function tour(){
+  if(file.length){const d=file.shift();dx=d.x;dy=d.y;}
+  const t=serpent[0],nx=t.x+dx,ny=t.y+dy;
+  if(nx<0||ny<0||nx>=N||ny>=N)return fin("bord");
+  const o=obstacles.find(o=>o.x===nx&&o.y===ny);
+  if(o)return fin(o.k);
+  // la queue avance sauf si on mange : on teste sur le corps sans le dernier segment
+  const mange=(etoile&&etoile.x===nx&&etoile.y===ny)||(pastille&&pastille.x===nx&&pastille.y===ny);
+  const corps=mange?serpent:serpent.slice(0,-1);
+  if(corps.some(s=>s.x===nx&&s.y===ny))return fin("queue");
+  serpent.unshift({x:nx,y:ny});
+  if(etoile&&etoile.x===nx&&etoile.y===ny){
+    score+=1;etoilesPrises++;etoile=null;SONS.etoile();
+    depuisMesure++;
+    if(depuisMesure>=2&&!pastille)pastille=caseLibre(true);       // nouvelle mesure 2 étoiles après la précédente
+    if(etoilesPrises%3===0)ajouterObstacle();                      // le repli gagne du terrain
+    etoile=caseLibre(false);
+    accelerer();
+  }else if(pastille&&pastille.x===nx&&pastille.y===ny){
+    score+=5;pastille=null;SONS.mesure();
+    const m=deck[mesuresPrises.length%deck.length];
+    mesuresPrises.push(m);depuisMesure=0;
+    accelerer();
+    hud();dessiner();
+    return pause(m);
+  }else{
+    serpent.pop();
+  }
+  hud();dessiner();
+}
+
+function accelerer(){
+  const c=MODES[mode];
+  const v=Math.max(c.plancher,c.depart-Math.floor(score*c.pente));
+  if(v!==vitesse){vitesse=v;clearInterval(timer);timer=setInterval(tour,vitesse);}
+}
+function ajouterObstacle(){
+  const c=caseLibre(true);if(!c)return;
+  const type=OBST[obstacles.length%OBST.length];
+  obstacles.push({x:c.x,y:c.y,k:type.k,lettre:type.lettre});
+}
+
+function pause(m){
+  enPause=true;clearInterval(timer);
+  document.getElementById("p-th").textContent="+ Mesure · "+m.theme;
+  document.getElementById("p-titre").textContent=m.titre;
+  document.getElementById("p-texte").textContent=m.texte;
+  document.getElementById("pause").className="vue";
+}
+function reprendre(){
+  if(!enPause)return;
+  enPause=false;file=[];
+  document.getElementById("pause").className="";
+  clearInterval(timer);timer=setInterval(tour,vitesse);
+}
+let bulleT;
+function bulle(m){
+  const b=document.getElementById("bulle");
+  b.innerHTML="<small>+ Mesure · "+m.theme+"</small>"+m.titre;
+  b.className="vue";clearTimeout(bulleT);bulleT=setTimeout(()=>b.className="",1800);
+}
+
+// ===== Dessin pixel (sprites 5 x 5, 1 pixel de sprite = 4 px) =====
+const THEMES={
+  couleur:{fond:"#F6F5F0",grille:"#ECEBE3",tete:"#00329E",corps:["#F90290","#00329E"],oeil:"#FFFFFF",
+           etoile:"#FFB800",mesure:"#F90290",mesure2:"#FFFFFF",obst:"#14142B",obst2:"#FFFFFF"},
+  nokia:  {fond:"#C5D3A0",grille:"#BCCB95",tete:"#2C3A1E",corps:["#2C3A1E","#43552E"],oeil:"#C5D3A0",
+           etoile:"#2C3A1E",mesure:"#2C3A1E",mesure2:"#C5D3A0",obst:"#2C3A1E",obst2:"#C5D3A0"}
+};
+let theme=localStorage.getItem("lachaine_theme")==="nokia"?"nokia":"couleur";
+const SPR={
+  etoile:["00100","01110","11111","01110","01010"],
+  mesure:["01110","11111","11011","11111","01110"],
+  R:["11110","10010","11100","10010","10010"],
+  "?":["01110","10001","00110","00000","00100"],
+  F:["11111","10000","11110","10000","10000"]
+};
+function sprite(g,mat,px,py,c,taille){
+  const s=taille||4;g.fillStyle=c;
+  mat.forEach((ligne,j)=>{for(let i=0;i<5;i++)if(ligne[i]==="1")g.fillRect(px+i*s,py+j*s,s,s);});
+}
+function dessiner(){
+  const T=THEMES[theme];
+  cx.fillStyle=T.fond;cx.fillRect(0,0,400,400);
+  // trame LCD : petits points de grille
+  cx.fillStyle=T.grille;
+  for(let x=0;x<N;x++)for(let y=0;y<N;y++)cx.fillRect(x*TAILLE+9,y*TAILLE+9,2,2);
+  obstacles.forEach(o=>{
+    const X=o.x*TAILLE,Y=o.y*TAILLE;
+    cx.fillStyle=T.obst;cx.fillRect(X,Y,TAILLE,TAILLE);
+    sprite(cx,SPR[o.lettre],X+2,Y+2,T.obst2,3.2);
+  });
+  if(etoile)sprite(cx,SPR.etoile,etoile.x*TAILLE,etoile.y*TAILLE,T.etoile);
+  if(pastille){
+    const clign=Math.floor(Date.now()/300)%2;      // la mesure clignote comme un bonus Nokia
+    sprite(cx,SPR.mesure,pastille.x*TAILLE,pastille.y*TAILLE,T.mesure);
+    if(clign)cx.fillStyle=T.mesure2,cx.fillRect(pastille.x*TAILLE+8,pastille.y*TAILLE+8,4,4);
+  }
+  serpent.forEach((s,i)=>{
+    const X=s.x*TAILLE,Y=s.y*TAILLE;
+    cx.fillStyle=i===0?T.tete:T.corps[i%2];
+    cx.fillRect(X+2,Y+2,16,16);                     // bloc carre avec un pixel d'ecart, facon 3310
+    if(i>0){cx.fillStyle=T.fond;cx.fillRect(X+8,Y+8,4,4);}
+  });
+  const t0=serpent[0],X=t0.x*TAILLE,Y=t0.y*TAILLE;
+  cx.fillStyle=T.oeil;
+  if(dx!==0){cx.fillRect(X+(dx>0?11:5),Y+5,4,4);cx.fillRect(X+(dx>0?11:5),Y+11,4,4);}
+  else{cx.fillRect(X+5,Y+(dy>0?11:5),4,4);cx.fillRect(X+11,Y+(dy>0?11:5),4,4);}
+}
+function legende(){
+  const T=THEMES[theme];
+  document.querySelectorAll("canvas[data-sprite]").forEach(c=>{
+    const g=c.getContext("2d"),k=c.dataset.sprite;g.clearRect(0,0,20,20);
+    if(k==="repli"){g.fillStyle=T.obst;g.fillRect(0,0,20,20);sprite(g,SPR.R,2,2,T.obst2,3.2);}
+    else{g.fillStyle=T.fond;g.fillRect(0,0,20,20);sprite(g,SPR[k],0,0,T[k]);}
+  });
+}
+function basculerTheme(){
+  theme=theme==="nokia"?"couleur":"nokia";localStorage.setItem("lachaine_theme",theme);
+  document.getElementById("btn-theme").textContent="AFFICHAGE : "+(theme==="nokia"?"NOKIA":"COULEUR");
+  legende();if(serpent)dessiner();
+}
+// clignotement de la mesure meme quand le serpent est lent
+setInterval(()=>{if(enJeu&&!enPause&&pastille)dessiner();},300);
+
+// ===== Bips facon Nokia (generes, aucun fichier son) =====
+let son=localStorage.getItem("lachaine_son")!=="off",actx=null;
+function audio(){
+  if(!actx){const A=window.AudioContext||window.webkitAudioContext;if(A)actx=new A();}
+  if(actx&&actx.state==="suspended")actx.resume();
+  return actx;
+}
+function bip(freq,duree,delai){
+  if(!son)return;const a=audio();if(!a)return;
+  const o=a.createOscillator(),g=a.createGain(),t0=a.currentTime+(delai||0);
+  o.type="square";o.frequency.value=freq;
+  g.gain.setValueAtTime(0.06,t0);g.gain.setValueAtTime(0,t0+duree);
+  o.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+duree+0.02);
+}
+const SONS={
+  etoile:()=>bip(1760,0.05),
+  mesure:()=>{bip(1319,0.08);bip(1760,0.08,0.09);bip(2093,0.12,0.18);},
+  perdu:()=>{bip(880,0.12);bip(659,0.12,0.14);bip(440,0.25,0.28);},
+  depart:()=>{bip(1047,0.06);bip(1568,0.08,0.08);}
+};
+function basculerSon(){
+  son=!son;localStorage.setItem("lachaine_son",son?"on":"off");majSon();
+  if(son){audio();bip(1760,0.05);}
+}
+function majSon(){
+  document.getElementById("son").textContent=son?"BIP ON":"BIP OFF";
+  document.getElementById("btn-son2").textContent="BIP : "+(son?"ON":"OFF");
+}
+
+function fin(cause){
+  enJeu=false;clearInterval(timer);SONS.perdu();
+  const nouveau=score>record();
+  if(nouveau)localStorage.setItem(RECORD_KEY,score);
+  const c=CAUSES[cause];
+  document.getElementById("fin-titre").textContent=c.t;
+  document.getElementById("fin-cause").textContent=c.m;
+  document.getElementById("fin-score").textContent=score;
+  const nm=mesuresPrises.length;
+  document.getElementById("fin-detail").textContent=
+    (nouveau&&score>0?"Nouveau record ! ":"")+"Chaîne de "+serpent.length+" anneaux · "+nm+" mesure"+(nm>1?"s":"")+" rassemblée"+(nm>1?"s":"");
+  const vus=[...new Map(mesuresPrises.map(m=>[m.id,m])).values()];
+  const liste=vus.length?vus:melange(MESURES).slice(0,3);
+  document.getElementById("fin-mesures-bloc").querySelector("h2").textContent=vus.length?"Ta chaîne de mesures":"Les mesures que tu as ratées";
+  document.getElementById("fin-mesures").innerHTML=liste.map(m=>
+    '<div class="mesure"><div class="th">'+m.theme+'</div><b>'+m.titre+'</b><p>'+m.texte+'</p>'+
+    '<a href="'+SRC(m.page)+'" target="_blank" rel="noopener">Source : livret, p. '+m.page+'</a></div>').join("");
+  document.getElementById("partage-ok").textContent="";
+  hud();ecran("e-fin");
+  window.scrollTo(0,0);
+}
+
+const ADRESSE_PUBLIQUE = "https://sararosenbergagent-create.github.io/la-chaine/";
+function defier(){
+  const n=mesuresPrises.length;
+  const txt="J'ai fait "+score+" points à La Chaîne et rassemblé "+n+" mesure"+(n>1?"s":"")+" du programme. Tu fais mieux ?";
+  // un fichier ouvert depuis le telephone (file://, content://) ne se partage pas : on donne l'adresse publique
+  const ici=location.href.split("#")[0];
+  const url=/^https?:/.test(ici)?ici:ADRESSE_PUBLIQUE;
+  const msg=document.getElementById("partage-ok");
+  const secours=()=>{
+    const complet=txt+" "+url;
+    const fini=()=>{msg.textContent="Message copié, colle-le où tu veux.";};
+    const montrer=()=>{msg.innerHTML='Copie ce message :<br><textarea readonly style="width:100%;height:80px;margin-top:6px;font-size:14px">'+complet.replace(/</g,"&lt;")+'</textarea>';
+                       const z=msg.querySelector("textarea");z.focus();z.select();};
+    try{
+      if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(complet).then(fini,montrer);
+      else montrer();
+    }catch(e){montrer();}
+  };
+  try{
+    if(navigator.share&&/^https?:/.test(url)){
+      navigator.share({title:"La Chaîne",text:txt,url}).catch(e=>{if(!e||e.name!=="AbortError")secours();});
+    }else secours();
+  }catch(e){secours();}
+}
+
+// Clavier
+document.addEventListener("keydown",e=>{
+  if(enPause&&(e.key==="Enter"||e.key===" ")){e.preventDefault();return reprendre();}
+  const k={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];
+  if(k){e.preventDefault();tourner(k[0],k[1]);}
+});
+// Glisser au doigt
+let tx=null,ty=null;
+cv.addEventListener("touchstart",e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+cv.addEventListener("touchmove",e=>{
+  if(tx===null)return;
+  const ddx=e.touches[0].clientX-tx,ddy=e.touches[0].clientY-ty;
+  if(Math.max(Math.abs(ddx),Math.abs(ddy))<24)return;
+  if(Math.abs(ddx)>Math.abs(ddy))tourner(ddx>0?1:-1,0);else tourner(0,ddy>0?1:-1);
+  tx=e.touches[0].clientX;ty=e.touches[0].clientY;
+},{passive:true});
+cv.addEventListener("touchend",()=>{tx=null;});
+
+hud();legende();majSon();
+document.getElementById("btn-theme").textContent="AFFICHAGE : "+(theme==="nokia"?"NOKIA":"COULEUR");
+</script>
+</body>
+</html>
