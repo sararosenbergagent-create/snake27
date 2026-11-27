@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#F90290">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Snake27">
 <title>Snake27</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -69,6 +72,11 @@
   .mesure a{font-size:12px;color:#555}
   .gros{font-family:var(--px);font-size:40px;color:var(--rose);text-align:center;line-height:1;margin:14px 0 8px;text-shadow:4px 4px 0 var(--bleu)}
   footer{width:100%;max-width:480px;font-size:11px;color:#666;padding:10px 14px 20px;text-align:center;line-height:1.5}
+  #aideInstall{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:3000;background:#fff;
+    max-width:460px;margin:0 auto;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:14px;
+    box-shadow:0 -4px 0 0 var(--bleu),0 4px 0 0 var(--bleu),-4px 0 0 0 var(--bleu),4px 0 0 0 var(--bleu),6px 6px 0 0 var(--rose)}
+  #aideInstall .btn{margin:0;width:auto;padding:10px;font-size:10px}
+  #aideInstall .non{background:none;border:0;color:#555;text-decoration:underline;cursor:pointer;font-size:13px}
 </style>
 </head>
 <body>
@@ -477,6 +485,20 @@ cv.addEventListener("touchmove",e=>{
 },{passive:true});
 cv.addEventListener("touchend",()=>{tx=null;});
 
+// ===== Application installable =====
+if("serviceWorker" in navigator && /^https:|^http:\/\/(127\.0\.0\.1|localhost)/.test(location.href)) navigator.serviceWorker.register("sw.js").catch(()=>{});
+(()=>{
+  const deja=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  if(deja||localStorage.getItem("snake27_aide_install")) return;
+  const bandeau=html=>{const b=document.createElement("div");b.id="aideInstall";b.setAttribute("role","note");
+    b.innerHTML=html+'<button class="non" type="button" id="aideNon">Non merci</button>';document.body.appendChild(b);
+    document.getElementById("aideNon").onclick=()=>{localStorage.setItem("snake27_aide_install","1");b.remove();};return b;};
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){
+    setTimeout(()=>{if(!enJeu)bandeau("<span>Pour l'avoir comme une appli : touche <b>Partager</b> puis <b>Sur l'écran d'accueil</b>.</span>");},3000);return;}
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();if(document.getElementById("aideInstall"))return;
+    const b=bandeau('<button class="btn rose" type="button" id="aideOui">Installer l\'appli</button>');
+    document.getElementById("aideOui").onclick=async()=>{e.prompt();try{await e.userChoice;}catch(_){ }localStorage.setItem("snake27_aide_install","1");b.remove();};});
+})();
 hud();legende();majSon();
 document.getElementById("btn-theme").textContent="AFFICHAGE : "+(theme==="nokia"?"NOKIA":"COULEUR");
 </script>
